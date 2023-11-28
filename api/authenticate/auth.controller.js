@@ -1,4 +1,4 @@
-const { RegisterService, getResisteredDataService} = require('./auth.services')
+const { RegisterService, getResisteredDataService } = require('./auth.services')
 
 
 module.exports = {
@@ -34,12 +34,23 @@ module.exports = {
         }
     },
     Login: async (req, res, next) => {
-        try{
+        try {
             const body = req.body;
-            // const result = await LoginService(body);
-            // const result1 = await RegisterService(body);
+            const result = await getResisteredDataService();
+            console.log(result);
+            const arr = [];
+            for (var i = 0; i < results.length; i++) {
+                if (body.mail == results[i].mail) {
+                    arr.push({ "id": results[i].id, "name": results[i].name, "mail": results[i].mail, "password": results[i].password, "mobile": results[i].mobile });
+                } else {
+                    throw new Error('Not Matched')
+                }
+            }
+            return res.json(
+                arr
+            )
         }
-        catch(err){
+        catch (err) {
             console.log(err);
         }
     }

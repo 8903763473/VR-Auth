@@ -34,5 +34,19 @@ module.exports = {
             )
         })
     },
-    
+    LoginService: (data) => {
+        return new Promise((resolve, reject) => {
+            pool.query(
+                `select * from registerData`,
+                [],
+                (error, result) => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    return resolve(result)
+                }
+            )
+        })
+    }
+
 }
