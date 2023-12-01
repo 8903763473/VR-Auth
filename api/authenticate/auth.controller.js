@@ -1,4 +1,4 @@
-const { RegisterService, getResisteredDataService } = require('./auth.services')
+const { RegisterService, getResisteredDataService, LoginService, ForgetPasswordService } = require('./auth.services')
 
 
 module.exports = {
@@ -36,22 +36,37 @@ module.exports = {
     Login: async (req, res, next) => {
         try {
             const body = req.body;
-            const result = await getResisteredDataService();
-            console.log(result);
-            const arr = [];
-            for (var i = 0; i < results.length; i++) {
-                if (body.mail == results[i].mail) {
-                    arr.push({ "id": results[i].id, "name": results[i].name, "mail": results[i].mail, "password": results[i].password, "mobile": results[i].mobile });
-                } else {
-                    throw new Error('Not Matched')
-                }
+            const results = await LoginService(body);
+
+            if (results?.length === 0) {
+                return res.status(404).json({ error: 'User Not Found ,Please Register' });
             }
-            return res.json(
-                arr
+
+            return res.status(200).json(
+                results
             )
         }
         catch (err) {
             console.log(err);
+            return res.status(404).json(err);
+        }
+    },
+    ForgetPassword: async (req, res, next) => {
+        try {
+            const body = req.body;
+            const results = await ForgetPasswordService(body);
+            console.log(results);
+            if (!results.affectedRows) {
+                throw new Error('Failed! Insert record');
+            };
+            return res.status(200).json(
+                body
+            )
+        }
+        catch (err) {
+            console.log(err);
+            return res.status(404).json(err);
         }
     }
+
 }

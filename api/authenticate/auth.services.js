@@ -1,24 +1,58 @@
-const pool = require('../../config/database')
+const pool = require('../../config/database');
+// const crypto = require('crypto');
+// const randomstring = require('randomstring');
+// const SECRET_KEY = randomstring.generate({ length: 32 });
+// const IV_LENGTH = 16; 
+
+// function encryptPassword(password) {
+//     return new Promise((resolve, reject) => {
+//         const iv = crypto.randomBytes(IV_LENGTH);
+//         const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(SECRET_KEY), iv);
+
+//         let encrypted = cipher.update(password, 'utf-8', 'hex');
+//         encrypted += cipher.final('hex');
+//         const result = { iv: iv.toString('hex'), encryptedPassword: encrypted };
+//         resolve(result);
+//     });
+// }
+
+// function decryptPassword(encryptedPassword,iv) {
+//     return new Promise((resolve, reject) => {
+//         const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(SECRET_KEY), Buffer.from(iv, 'hex'));
+//         console.log('DECIPHER',decipher);
+//         let decrypted = decipher.update(encryptedPassword, 'hex', 'utf-8');
+//         console.log(decrypted);
+//         decrypted += decipher.final('utf-8');
+//         console.log('DECRYPTED PASS',decrypted);
+//         resolve(decrypted);
+//     });
+// }
 
 module.exports = {
     RegisterService: (data) => {
-        return new Promise((resolve, reject) => {
-            pool.query(
-                `insert into registerData (name,mail,password,mobile) values (?,?,?,?)`,
-                [
-                    data.name,
-                    data.mail,
-                    data.password,
-                    data.mobile
-                ],
-                (error, result) => {
-                    if (error) {
-                        return reject(error);
+        return new Promise(async (resolve, reject) => {
+            try {
+                // const EnccryptedData = await encryptPassword(data.password);
+                pool.query(
+                    `INSERT INTO registerData (name, mail, password, mobile) VALUES (?, ?, ?, ?)`,
+                    [
+                        data.name,
+                        data.mail,
+                        data.password,
+                        data.mobile
+                    ],
+                    (error, result) => {
+                        if (error) {
+                            return reject(error);
+                        }
+                        return resolve(result);
                     }
-                    return resolve(result)
-                }
-            )
-        })
+                );
+            }
+            catch (error) {
+                reject(error)
+            }
+        });
     },
     getResisteredDataService: () => {
         return new Promise((resolve, reject) => {
@@ -37,16 +71,42 @@ module.exports = {
     LoginService: (data) => {
         return new Promise((resolve, reject) => {
             pool.query(
-                `select * from registerData`,
-                [],
+                `select * from registerData where mail=?`,
+                [data.mail],
                 (error, result) => {
                     if (error) {
                         return reject(error);
+                    }
+
+                    if (result[0]?.mail === data?.mail) {
+                        if (result[0]?.password !== data?.password) {
+                            return reject({ error: 'Incorrect password' });
+                        }
+                    } else {
+                        return reject({ error: 'User Not Found ,Please Register' });
                     }
                     return resolve(result)
                 }
             )
         })
+    },
+    ForgetPasswordService: (data) => {
+        console.log(data);
+        return new Promise((resolve, reject) => {
+            pool.query(
+                `update registerData set password = ? where mail = ?`,
+                [
+                    data.confirmPassword,
+                    data.mail
+                ],
+                (error, result) => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    console.log('Ramya',result);
+                    return resolve(result)
+                }
+            )
+        })
     }
-
 }
