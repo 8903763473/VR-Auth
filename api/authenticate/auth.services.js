@@ -1,4 +1,7 @@
 const pool = require('../../config/database');
+const bcrypt = require('bcrypt');
+
+
 // const crypto = require('crypto');
 // const randomstring = require('randomstring');
 // const SECRET_KEY = randomstring.generate({ length: 32 });
@@ -28,17 +31,45 @@ const pool = require('../../config/database');
 //     });
 // }
 
+async function encryptPassword(password) {
+    return new Promise((resolve, reject) => {
+        const plainPassword = password
+        const saltRounds = 10;
+        const salt = bcrypt.genSaltSync(saltRounds);
+        const hashedPassword = bcrypt.hashSync(plainPassword, salt);
+        console.log('Hashed Password:', hashedPassword);
+        // decryptPassword(hashedPassword, plainPassword)
+        return resolve(hashedPassword)
+    });
+}
+
+async function decryptPassword(hash, original) {
+    return new Promise((resolve, reject) => {
+        try {
+            const passwordMatch = bcrypt.compareSync(original, hash);
+            if (passwordMatch) {
+                return resolve(passwordMatch)
+            } else {
+                return reject({ error: 'Incorrect Password' })
+            }
+        }
+        catch (err) {
+            return reject({ error: 'Incorrect Password' })
+        }
+    });
+}
+
 module.exports = {
     RegisterService: (data) => {
         return new Promise(async (resolve, reject) => {
             try {
-                // const EnccryptedData = await encryptPassword(data.password);
+                const EncryptedPassword = await encryptPassword(data.password);
                 pool.query(
                     `INSERT INTO registerData (name, mail, password, mobile) VALUES (?, ?, ?, ?)`,
                     [
                         data.name,
                         data.mail,
-                        data.password,
+                        EncryptedPassword,
                         data.mobile
                     ],
                     (error, result) => {
@@ -73,13 +104,14 @@ module.exports = {
             pool.query(
                 `select * from registerData where mail=?`,
                 [data.mail],
-                (error, result) => {
+                async (error, result) => {
                     if (error) {
                         return reject(error);
                     }
+                    const Pass = await decryptPassword(result[0]?.password, data?.password)
 
                     if (result[0]?.mail === data?.mail) {
-                        if (result[0]?.password !== data?.password) {
+                        if (Pass == false) {
                             return reject({ error: 'Incorrect password' });
                         }
                     } else {
@@ -103,7 +135,7 @@ module.exports = {
                     if (error) {
                         return reject(error);
                     }
-                    console.log('Ramya',result);
+                    console.log('Ramya', result);
                     return resolve(result)
                 }
             )
