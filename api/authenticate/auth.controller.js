@@ -1,4 +1,4 @@
-const { RegisterService, getResisteredDataService, LoginService, ForgetPasswordService } = require('./auth.services')
+const { RegisterService, getResisteredDataService, otpVerifyService, LoginService, ForgetPasswordService, SentOTPService } = require('./auth.services')
 
 
 module.exports = {
@@ -6,6 +6,7 @@ module.exports = {
         try {
             const body = req.body;
             const result = await RegisterService(body);
+            console.log(result);
             if (!result.affectedRows) {
                 throw new Error('Failed! Insert record');
             };
@@ -36,8 +37,9 @@ module.exports = {
     Login: async (req, res, next) => {
         try {
             const body = req.body;
+            console.log('body', body);
             const results = await LoginService(body);
-
+            console.log('results', results);
             if (results?.length === 0) {
                 return res.status(404).json({ error: 'User Not Found ,Please Register' });
             }
@@ -55,6 +57,24 @@ module.exports = {
         try {
             const body = req.body;
             const results = await ForgetPasswordService(body);
+            console.log('RESULTS', results);
+            // if (!results.affectedRows) {
+            //     throw new Error('Failed! Insert record');
+            // };
+            return res.status(200).json(
+                results
+            )
+        }
+        catch (err) {
+            console.log(err);
+            return res.status(404).json(err);
+        }
+    },
+    sentOtp: async (req, res, next) => {
+        try {
+            const body = req.body;
+            console.log('req', req.body);
+            const results = await SentOTPService(body);
             console.log(results);
             if (!results.affectedRows) {
                 throw new Error('Failed! Insert record');
@@ -67,5 +87,23 @@ module.exports = {
             console.log(err);
             return res.status(404).json(err);
         }
-    }
+    },
+    otpVerify: async (req, res, next) => {
+        try {
+            const body = req.body;
+            console.log('req', req.body);
+            const results = await otpVerifyService(body);
+            console.log('RES', results);
+            // if (!results.affectedRows) {
+            //     throw new Error('Failed! Insert record');
+            // };
+            return res.status(200).json(
+                results
+            )
+        }
+        catch (err) {
+            console.log(err);
+            return res.status(404).json(err);
+        }
+    },
 }

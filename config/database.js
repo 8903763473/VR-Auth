@@ -12,7 +12,7 @@ pool.getConnection(function (err) {
     if (err) throw err;
     console.log('Connected Successfully')
     pool.query(
-        `CREATE TABLE IF NOT EXISTS registerData (id int primary key auto_increment,name varchar(25),mail varchar(30),mobile char(10) NOT NULL UNIQUE,password varchar(100))`,
+        `CREATE TABLE IF NOT EXISTS registerData (id int primary key auto_increment,userId varchar(20),name varchar(25),mail varchar(30),mobile char(10) NOT NULL UNIQUE,otp varchar(100),password varchar(100))`,
         function (err) {
             if (err) throw err;
             console.log('registerData Table Created');
