@@ -53,27 +53,27 @@ module.exports = {
             return res.status(404).json(err);
         }
     },
-    ForgetPassword: async (req, res, next) => {
-        try {
-            const body = req.body;
-            const results = await ForgetPasswordService(body);
-            console.log('RESULTS', results);
-            // if (!results.affectedRows) {
-            //     throw new Error('Failed! Insert record');
-            // };
-            return res.status(200).json(
-                results
-            )
-        }
-        catch (err) {
-            console.log(err);
-            return res.status(404).json(err);
-        }
-    },
+    // ForgetPassword: async (req, res, next) => {
+    //     try {
+    //         const body = req.body;
+    //         const results = await ForgetPasswordService(body);
+    //         console.log('RESULTS', results);
+    //         // if (!results.affectedRows) {
+    //         //     throw new Error('Failed! Insert record');
+    //         // };
+    //         return res.status(200).json(
+    //             results
+    //         )
+    //     }
+    //     catch (err) {
+    //         console.log(err);
+    //         return res.status(404).json(err);
+    //     }
+    // },
     sentOtp: async (req, res, next) => {
         try {
             const body = req.body;
-            console.log('req', req.body);
+            console.log('request', req.body);
             const results = await SentOTPService(body);
             console.log(results);
             if (!results.affectedRows) {

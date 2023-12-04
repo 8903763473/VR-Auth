@@ -43,6 +43,16 @@ async function generateUniqueId() {
     return ("VR-" + UID);
 }
 
+async function generateNumericOTP(length) {
+    const digits = '0123456789';
+    let otp = '';
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * digits.length);
+        otp += digits[randomIndex];
+    }
+    return otp;
+}
+
 async function sentEmail(mail) {
     try {
         const transporter = nodemailer.createTransport({
@@ -52,13 +62,18 @@ async function sentEmail(mail) {
                 pass: 'ccwihtzenkjxyvrs',
             },
         });
-        const otp = otpGenerator.generate(6, {
-            digits: true
-        });
+        // const otp = otpGenerator.generate(6, {
+        //     digits: true,
+        //     upperCase: false,
+        //     specialChars: false,
+        //     alphabets: false,
+        // });
+        const otp = await generateNumericOTP(6);
+
         const mailOptions = {
             from: 'mugeshwaran27@gmail.com',
             to: mail,
-            subject: 'VR - OTP',
+            subject: 'OTP From Vijay',
             text: `Your OTP is: ${otp}`,
         };
         console.log('mailOptions', mailOptions);
@@ -75,31 +90,6 @@ async function sentEmail(mail) {
         throw new Error("Error in sending OTP Email");
     }
 }
-
-// async function setOtp(data, otp) {
-//     return new Promise(async (resolve, reject) => {
-//         const EncOtp = await encryptPassword(otp);
-//         console.log('ENC', EncOtp);
-//         pool.query(
-//             `update registerData set otp=? where mail=?`,
-//             [
-//                 EncOtp,
-//                 data.mail
-//             ],
-//             async (error, result) => {
-//                 if (error) {
-//                     console.log('error', error);
-//                     return reject(error);
-//                 }
-//                 if (result[0]?.mail !== data?.mail) {
-//                     return reject({ error: 'User Not Found ,Please Register' });
-//                 }
-//                 console.log('result', result);
-//                 return resolve(result);
-//             }
-//         );
-//     });
-// }
 
 async function setOtp(data, otp) {
     return new Promise(async (resolve, reject) => {
@@ -132,15 +122,13 @@ async function setOtp(data, otp) {
     });
 }
 
-
-
 async function setPassword(data) {
-    console.log('LOCAL DATA', data);
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+        const EncryptedPassword = await encryptPassword(data.confirmPassword);
         pool.query(
             `update registerData set password = ? where mail = ?`,
             [
-                data.confirmPassword,
+                EncryptedPassword,
                 data.mail
             ],
             (error, result) => {
@@ -152,7 +140,6 @@ async function setPassword(data) {
         );
     });
 }
-
 
 
 module.exports = {
@@ -178,6 +165,18 @@ module.exports = {
                         return resolve(result);
                     }
                 );
+                // pool.query(
+                //     `select * from registerData where mobile = ?`,
+                //     [
+                //         data.mobile
+                //     ],
+                //     (error, result) => {
+                //         if (error) {
+                //             return reject(error);
+                //         }
+                //         return resolve(result);
+                //     }
+                // )
             }
             catch (error) {
                 reject(error)
@@ -205,14 +204,17 @@ module.exports = {
                 [data.mail],
                 async (error, result) => {
                     if (error) {
-                        return reject(error);
+                        return reject({ error: error });
                     }
-                    const Pass = await decryptPassword(result[0]?.password, data?.password)
-                    if (result[0]?.mail === data?.mail) {
+                    console.log('LOG RES', result[0]);
+                    console.log('LOG RES', result[0].password);
+                    if (result[0]?.mail == data?.mail) {
+                        const Pass = await decryptPassword(result[0]?.password, data?.password);
                         if (Pass == false) {
                             return reject({ error: 'Incorrect password' });
                         }
                     } else {
+                        console.log('MAIL NOT MATCHED');
                         return reject({ error: 'User Not Found ,Please Register' });
                     }
                     return resolve(result)
@@ -220,38 +222,40 @@ module.exports = {
             )
         })
     },
-    ForgetPasswordService: (data) => {
-        console.log('Data', data);
-        localStorage.removeItem('changePasswod');
-        return new Promise(async (resolve, reject) => {
-            pool.query(
-                `select * from registerData where mail=?`,
-                [
-                    data.mail
-                ],
-                async (error, result) => {
-                    if (error) {
-                        return reject(error);
-                    }
-                    if (result[0].mail === data.mail) {
-                        if (data.newPassword != data.confirmPassword) {
-                            return reject({ error: 'Password not match' })
-                        }
-                        const otpResult = await sentEmail(data.mail);
-                        await setOtp(data, otpResult)
-                        localStorage.setItem('changePasswod', JSON.stringify(data))
-                        return resolve(result);
-                    } else {
-                        return reject({ error: 'Mail not found' });
-                    }
-                }
-            )
-        })
-    },
+    // ForgetPasswordService: (data) => {
+    //     console.log('Data', data);
+    //     localStorage.removeItem('changePasswod');
+    //     return new Promise(async (resolve, reject) => {
+    //         pool.query(
+    //             `select * from registerData where mail=?`,
+    //             [
+    //                 data.mail
+    //             ],
+    //             async (error, result) => {
+    //                 if (error) {
+    //                     return reject(error);
+    //                 }
+    //                 console.log(result[0]);
+    //                 if (result[0]?.mail === data?.mail) {
+    //                     if (data?.newPassword != data?.confirmPassword) {
+    //                         return reject({ error: 'Password not match' })
+    //                     }
+    //                     const otpResult = await sentEmail(data.mail);
+    //                     await setOtp(data, otpResult)
+    //                     localStorage.setItem('changePasswod', JSON.stringify(data))
+    //                     return resolve(result);
+    //                 } else {
+    //                     return reject({ error: 'Mail not found' });
+    //                 }
+    //             }
+    //         )
+    //     })
+    // },
     SentOTPService: async (data) => {
         return new Promise(async (resolve, reject) => {
             const generatedOTP = await sentEmail(data.mail);
             console.log('generatedOTP', generatedOTP);
+            // const EncryptedPassword = await encryptPassword(data.password);
             pool.query(
                 `update registerData set otp = ? where mail = ?`,
                 [
@@ -263,6 +267,7 @@ module.exports = {
                         return reject(error);
                     }
                     console.log('Ramya', result);
+                    localStorage.setItem('changePasswod', JSON.stringify(data))
                     return resolve(result)
                 }
             )
@@ -271,16 +276,16 @@ module.exports = {
     otpVerifyService: async (data) => {
         return new Promise((resolve, reject) => {
             pool.query(
-                `select * from registerData where mail=?`,
+                `select * from registerData where mail = ?`,
                 [data.mail],
                 async (error, result) => {
                     if (error) {
                         return reject(error);
                     }
-                    console.log(result);
-                    // const OTP = await decryptPassword(result[0]?.otp, data.otp)
+                    console.log('RES >>>', result);
+                    const OTP = await decryptPassword(result[0]?.otp, data.otp)
 
-                    if (result[0]?.mail === data?.mail) {
+                    if (OTP == false) {
                         if (result[0].otp != data?.otp) {
                             return reject({ error: 'Wrong OTP' });
                         } else {
