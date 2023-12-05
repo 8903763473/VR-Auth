@@ -4,8 +4,6 @@ const nodemailer = require('nodemailer');
 const otpGenerator = require('otp-generator');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
-const LocalStorage = require('node-localstorage').LocalStorage;
-const localStorage = new LocalStorage('./scratch');
 
 
 async function encryptPassword(password) {
@@ -62,12 +60,7 @@ async function sentEmail(mail) {
                 pass: 'ccwihtzenkjxyvrs',
             },
         });
-        // const otp = otpGenerator.generate(6, {
-        //     digits: true,
-        //     upperCase: false,
-        //     specialChars: false,
-        //     alphabets: false,
-        // });
+
         const otp = await generateNumericOTP(6);
 
         const mailOptions = {
@@ -91,40 +84,9 @@ async function sentEmail(mail) {
     }
 }
 
-async function setOtp(data, otp) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const EncOtp = await encryptPassword(otp);
-            console.log('ENC', EncOtp);
-
-            pool.query(
-                `update registerData set otp=? where mail=?`,
-                [EncOtp, data.mail],
-                async (error, result) => {
-                    if (error) {
-                        console.error('Error executing query:', error);
-                        return reject(error);
-                    }
-
-                    if (result.affectedRows === 0) {
-                        // If no rows were affected, user not found
-                        return reject({ error: 'User Not Found, Please Register' });
-                    }
-
-                    console.log('Query result:', result);
-                    return resolve(result);
-                }
-            );
-        } catch (err) {
-            console.error('Error in setOtp:', err);
-            return reject(err);
-        }
-    });
-}
-
 async function setPassword(data) {
     return new Promise(async (resolve, reject) => {
-        const EncryptedPassword = await encryptPassword(data.confirmPassword);
+        const EncryptedPassword = await encryptPassword(data.forgetPass);
         pool.query(
             `update registerData set password = ? where mail = ?`,
             [
@@ -140,7 +102,6 @@ async function setPassword(data) {
         );
     });
 }
-
 
 module.exports = {
     RegisterService: (data) => {
@@ -165,18 +126,6 @@ module.exports = {
                         return resolve(result);
                     }
                 );
-                // pool.query(
-                //     `select * from registerData where mobile = ?`,
-                //     [
-                //         data.mobile
-                //     ],
-                //     (error, result) => {
-                //         if (error) {
-                //             return reject(error);
-                //         }
-                //         return resolve(result);
-                //     }
-                // )
             }
             catch (error) {
                 reject(error)
@@ -206,8 +155,6 @@ module.exports = {
                     if (error) {
                         return reject({ error: error });
                     }
-                    console.log('LOG RES', result[0]);
-                    console.log('LOG RES', result[0].password);
                     if (result[0]?.mail == data?.mail) {
                         const Pass = await decryptPassword(result[0]?.password, data?.password);
                         if (Pass == false) {
@@ -222,44 +169,14 @@ module.exports = {
             )
         })
     },
-    // ForgetPasswordService: (data) => {
-    //     console.log('Data', data);
-    //     localStorage.removeItem('changePasswod');
-    //     return new Promise(async (resolve, reject) => {
-    //         pool.query(
-    //             `select * from registerData where mail=?`,
-    //             [
-    //                 data.mail
-    //             ],
-    //             async (error, result) => {
-    //                 if (error) {
-    //                     return reject(error);
-    //                 }
-    //                 console.log(result[0]);
-    //                 if (result[0]?.mail === data?.mail) {
-    //                     if (data?.newPassword != data?.confirmPassword) {
-    //                         return reject({ error: 'Password not match' })
-    //                     }
-    //                     const otpResult = await sentEmail(data.mail);
-    //                     await setOtp(data, otpResult)
-    //                     localStorage.setItem('changePasswod', JSON.stringify(data))
-    //                     return resolve(result);
-    //                 } else {
-    //                     return reject({ error: 'Mail not found' });
-    //                 }
-    //             }
-    //         )
-    //     })
-    // },
     SentOTPService: async (data) => {
         return new Promise(async (resolve, reject) => {
             const generatedOTP = await sentEmail(data.mail);
-            console.log('generatedOTP', generatedOTP);
-            // const EncryptedPassword = await encryptPassword(data.password);
             pool.query(
-                `update registerData set otp = ? where mail = ?`,
+                `update registerData set otp = ? , forgetPass = ? where mail = ?`,
                 [
                     generatedOTP,
+                    data.confirmPassword,
                     data.mail
                 ],
                 (error, result) => {
@@ -267,7 +184,6 @@ module.exports = {
                         return reject(error);
                     }
                     console.log('Ramya', result);
-                    localStorage.setItem('changePasswod', JSON.stringify(data))
                     return resolve(result)
                 }
             )
@@ -289,9 +205,7 @@ module.exports = {
                         if (result[0].otp != data?.otp) {
                             return reject({ error: 'Wrong OTP' });
                         } else {
-                            const LocalPass = JSON.parse(localStorage.getItem('changePasswod'));
-                            console.log('local', LocalPass);
-                            await setPassword(LocalPass)
+                            await setPassword(result[0])
                         }
                     } else {
                         return reject({ error: 'User Not Found ,Please Register' });
