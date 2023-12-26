@@ -1,9 +1,10 @@
 const pool = require('../../config/database');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
-const otpGenerator = require('otp-generator');
-const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
+// const otpGenerator = require('otp-generator');
+// const crypto = require('crypto');
 
 
 async function encryptPassword(password) {
@@ -12,7 +13,6 @@ async function encryptPassword(password) {
         const saltRounds = 10;
         const salt = bcrypt.genSaltSync(saltRounds);
         const hashedPassword = bcrypt.hashSync(plainPassword, salt);
-        console.log('Hashed Password:', hashedPassword);
         return resolve(hashedPassword)
     });
 }
@@ -33,11 +33,11 @@ async function generateUniqueId() {
     // const uniqueId = "VR-" + randomPart;
     // console.log('uniqueId', uniqueId);
     // return uniqueId;
+    // const ID = uuidv4();
 
-    const ID = uuidv4();
-    const min = Math.pow(10, 1 - 1);
-    const max = Math.pow(10, 1) - 1;
-    const UID = ID?.substring(0, 3) + "-" + Math.floor(Math.random() * (max - min + 1)) + min;
+    const min = Math.pow(10, 4);
+    const max = Math.pow(10, 5) - 1;
+    const UID = Math.floor(Math.random() * (max - min + 1)) + min;
     return ("VR-" + UID);
 }
 
@@ -69,7 +69,6 @@ async function sentEmail(mail) {
             subject: 'OTP From Vijay',
             text: `Your OTP is: ${otp}`,
         };
-        console.log('mailOptions', mailOptions);
 
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
@@ -108,8 +107,7 @@ module.exports = {
         return new Promise(async (resolve, reject) => {
             try {
                 const EncryptedPassword = await encryptPassword(data.password);
-                const UserId = await generateUniqueId()
-                console.log('UID', UserId);
+                const UserId = await generateUniqueId();
                 pool.query(
                     `INSERT INTO registerData (name, mail, password, mobile , userId) VALUES (?, ?, ?, ? , ?)`,
                     [
@@ -161,7 +159,6 @@ module.exports = {
                             return reject({ error: 'Incorrect password' });
                         }
                     } else {
-                        console.log('MAIL NOT MATCHED');
                         return reject({ error: 'User Not Found ,Please Register' });
                     }
                     return resolve(result)
@@ -198,7 +195,6 @@ module.exports = {
                     if (error) {
                         return reject(error);
                     }
-                    console.log('RES >>>', result);
                     const OTP = await decryptPassword(result[0]?.otp, data.otp)
 
                     if (OTP == false) {
@@ -214,5 +210,9 @@ module.exports = {
                 }
             )
         })
+    },
+    getjwtToken: (userId) => {
+        const token = jwt.sign({ userId }, process.env.JWT_SECRET_KEY);
+        return token;
     },
 }
