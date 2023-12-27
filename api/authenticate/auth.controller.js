@@ -5,6 +5,7 @@ module.exports = {
     Register: async (req, res) => {
         try {
             const body = req.body;
+            console.log(body);
             const result = await RegisterService(body);
             if (!result.affectedRows) {
                 throw new Error('Failed! Insert record');
@@ -17,12 +18,12 @@ module.exports = {
             res?.status(500).json({ error: 'Internal Server Error' });
         }
     },
-    getResisteredData: async (req,res) => {
+    getResisteredData: async (req, res) => {
         try {
             const results = await getResisteredDataService();
             const arr = [];
             for (var i = 0; i < results.length; i++) {
-                arr.push({ "id": results[i].id, "name": results[i].name, "mail": results[i].mail, "password": results[i].password, "mobile": results[i].mobile });
+                arr.push({ "id": results[i].id, "userId": results[i].userId, "name": results[i].name, "mail": results[i].mail, "password": results[i].password, "mobile": results[i].mobile });
             }
             return res?.status(200).json(
                 arr

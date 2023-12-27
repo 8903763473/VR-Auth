@@ -36,8 +36,7 @@ async function modifyChat(allData) {
         const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
         const formattedtime = `${hours.toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')} ${amPm}`;
         const chat = []
-        chat.push({ "receiverId": allData?.receiver, "message": allData?.message, "time": formattedtime, "date": formattedDate });
-        console.log('chat', chat);
+        chat.push({ "receiverId": allData?.receiver, "senderId": allData?.senderId, "message": allData?.message, "time": formattedtime, "date": formattedDate });
         return resolve(chat)
     });
 }
@@ -55,6 +54,7 @@ module.exports = {
             set(newMessageRef, {
                 message: body.message,
                 receiver: body.receiverId,
+                senderId: body.userId,
                 timestamp: serverTimestamp()
             });
 
@@ -68,20 +68,17 @@ module.exports = {
         try {
             const body = req.body;
             const chatRef = ref(database, `chats/${body.userId}`);
-            const chatHistory = []
+            const chatHistory = [];
             onValue(chatRef, async (snapshot) => {
                 const messages = snapshot.val();
-                // console.log('Messages', messages);
-                // callback(messages);
-
                 if (messages === null) {
                     return res?.status(404).json({ error: 'No messages here' });
                 }
-
                 for (const messageId in messages) {
                     const CorrectData = await modifyChat(messages[messageId]);
                     chatHistory.push(CorrectData[0]);
                 }
+                console.log(chatHistory);
                 res?.status(200).json(chatHistory);
             });
         } catch (err) {
@@ -89,7 +86,7 @@ module.exports = {
             res?.status(500).json({ error: 'Internal Server Error' });
         }
     },
-    updateStatus: async (req, res) => {
+    NetworkStatus: async (req, res) => {
         try {
             const { userId, status } = req.body;
             presenceRef.child(userId).set(status);

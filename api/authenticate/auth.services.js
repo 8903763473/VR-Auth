@@ -1,19 +1,23 @@
 const pool = require('../../config/database');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
-const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 // const otpGenerator = require('otp-generator');
 // const crypto = require('crypto');
+// const { v4: uuidv4 } = require('uuid');
 
 
 async function encryptPassword(password) {
-    return new Promise((resolve, reject) => {
-        const plainPassword = password
-        const saltRounds = 10;
-        const salt = bcrypt.genSaltSync(saltRounds);
-        const hashedPassword = bcrypt.hashSync(plainPassword, salt);
-        return resolve(hashedPassword)
+    return new Promise(async (resolve, reject) => {
+        try {
+            const plainPassword = password;
+            const saltRounds = 10;
+            const salt = bcrypt.genSaltSync(saltRounds);
+            const hashedPassword = bcrypt?.hashSync(plainPassword, salt);
+            resolve(hashedPassword);
+        } catch (error) {
+            reject(error);
+        }
     });
 }
 
@@ -21,9 +25,9 @@ async function decryptPassword(hash, original) {
     return new Promise((resolve, reject) => {
         const passwordMatch = bcrypt.compare(original, hash);
         if (passwordMatch === false) {
-            return reject({ error: 'Incorrect Password' })
+            return reject({ error: 'Incorrect Password' });
         } else {
-            return resolve(passwordMatch)
+            return resolve(passwordMatch);
         }
     });
 }
@@ -64,9 +68,10 @@ async function sentEmail(mail) {
         const otp = await generateNumericOTP(6);
 
         const mailOptions = {
-            from: 'mugeshwaran27@gmail.com',
+            // mugeshwaran27@gmail.com
+            from: 'vijayakumar532001@gmail.com',
             to: mail,
-            subject: 'OTP From Vijay',
+            subject: 'OTP from Vijay',
             text: `Your OTP is: ${otp}`,
         };
 
@@ -106,8 +111,8 @@ module.exports = {
     RegisterService: (data) => {
         return new Promise(async (resolve, reject) => {
             try {
-                const EncryptedPassword = await encryptPassword(data.password);
                 const UserId = await generateUniqueId();
+                const EncryptedPassword = await encryptPassword(data?.password);
                 pool.query(
                     `INSERT INTO registerData (name, mail, password, mobile , userId) VALUES (?, ?, ?, ? , ?)`,
                     [
