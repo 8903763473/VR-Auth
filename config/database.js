@@ -12,10 +12,13 @@ pool.getConnection(function (err) {
     if (err) throw err;
     console.log('Connected Successfully')
     pool.query(
-        `CREATE TABLE IF NOT EXISTS registerData (id int primary key auto_increment,userId varchar(20),name varchar(25),mail varchar(30),mobile char(10) NOT NULL UNIQUE,otp varchar(100),password varchar(100),forgetPass varchar(100))`,
+        `CREATE TABLE IF NOT EXISTS registerData (id int primary key auto_increment,userId varchar(20),name varchar(25),mail varchar(30),mobile char(10) NOT NULL UNIQUE,otp varchar(100),password varchar(100),forgetPass varchar(100),image longblob)`,
         function (err) {
-            if (err) throw err;
-            console.log('registerData Table Created');
+            if (err) {
+                console.error('Error creating registerData table:', err);
+            } else {
+                console.log('registerData Table Created');
+            }
         }
     )
 })

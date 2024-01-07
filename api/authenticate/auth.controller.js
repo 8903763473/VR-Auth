@@ -23,8 +23,10 @@ module.exports = {
             const results = await getResisteredDataService();
             const arr = [];
             for (var i = 0; i < results.length; i++) {
-                arr.push({ "id": results[i].id, "userId": results[i].userId, "name": results[i].name, "mail": results[i].mail, "password": results[i].password, "mobile": results[i].mobile });
+                const imageBuffer = "" + Buffer.from(results[i]?.image);
+                arr.push({ "id": results[i].id, "userId": results[i].userId, "name": results[i].name, "image": imageBuffer, "mail": results[i].mail, "password": results[i].password, "mobile": results[i].mobile });
             }
+            console.log('RegisteredUsers', arr);
             return res?.status(200).json(
                 arr
             )

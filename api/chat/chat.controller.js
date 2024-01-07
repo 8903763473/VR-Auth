@@ -3,12 +3,13 @@ const admin = require('firebase-admin');
 const { getDatabase, ref, push, onValue, set, serverTimestamp } = require('firebase/database');
 
 const serviceAccount = require('../../firebaseConfig.json');
+
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://vr-auth-default-rtdb.firebaseio.com",
 });
 
-const presenceRef = admin.database().ref('presence');
+const presenceRef = admin.database().ref('onlineUsers');
 
 const firebaseConfig = {
     apiKey: "AIzaSyBOjBYpsLRYXcuL2YppAzHf-erRNawB7KM",
@@ -69,7 +70,7 @@ module.exports = {
             const body = req.body;
             const chatRef = ref(database, `chats/${body.userId}`);
             const chatHistory = [];
-            onValue(chatRef, async (snapshot) => {
+            const snapshotCallback = async (snapshot) => {
                 const messages = snapshot.val();
                 if (messages === null) {
                     return res?.status(404).json({ error: 'No messages here' });
@@ -78,24 +79,43 @@ module.exports = {
                     const CorrectData = await modifyChat(messages[messageId]);
                     chatHistory.push(CorrectData[0]);
                 }
-                console.log(chatHistory);
                 res?.status(200).json(chatHistory);
-            });
+            };
+    
+            onValue(chatRef, snapshotCallback, { onlyOnce: true });
         } catch (err) {
             console.error(err);
             res?.status(500).json({ error: 'Internal Server Error' });
         }
-    },
+    },    
     NetworkStatus: async (req, res) => {
         try {
             const { userId, status } = req.body;
-            presenceRef.child(userId).set(status);
-            res.status(200).json({ success: true });
+
+            if (!userId) {
+                return res.status(400).json({ error: 'Invalid userId' });
+            }
+
+            if (status === 'offline') {
+                await presenceRef.child(userId).remove();
+                res.status(200).json({ success: true });
+            } else if (status === 'online') {
+                presenceRef.child(userId).set(status, (error) => {
+                    if (error) {
+                        console.error(error);
+                        return res.status(500).json({ error: 'Internal Server Error' });
+                    }
+                    res.status(200).json({ success: true });
+                });
+            } else {
+                res.status(400).json({ error: 'Invalid status' });
+            }
         } catch (err) {
             console.error(err);
-            res?.status(500).json({ error: 'Internal Server Error' });
+            res.status(500).json({ error: 'Internal Server Error' });
         }
     },
+
     OnlineUsers: async (req, res) => {
         try {
             const snapshot = await presenceRef.orderByValue().equalTo('online').once('value');

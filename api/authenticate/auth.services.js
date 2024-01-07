@@ -114,13 +114,14 @@ module.exports = {
                 const UserId = await generateUniqueId();
                 const EncryptedPassword = await encryptPassword(data?.password);
                 pool.query(
-                    `INSERT INTO registerData (name, mail, password, mobile , userId) VALUES (?, ?, ?, ? , ?)`,
+                    `INSERT INTO registerData (name, mail, password, mobile , userId,image) VALUES (?, ?, ?, ? , ? , ?)`,
                     [
                         data.name,
                         data.mail,
                         EncryptedPassword,
                         data.mobile,
-                        UserId
+                        UserId,
+                        data.image
                     ],
                     (error, result) => {
                         if (error) {

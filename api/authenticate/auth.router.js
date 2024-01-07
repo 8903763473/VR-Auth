@@ -7,10 +7,10 @@ const router = require('express').Router();
 // ************** Login / Register **************
 
 router.post('/Register', Register);
-router.get('/getRegisteredData', VerifyJWT, getResisteredData);
 router.post('/login', Login);
-router.put('/getOtp', sentOtp);
 router.post('/verifyOtp', otpVerify);
+router.get('/getRegisteredData', VerifyJWT, getResisteredData);
+router.put('/getOtp', sentOtp);
 
 // ************** Message ***********************
 
