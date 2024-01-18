@@ -42,7 +42,12 @@ async function modifyChat(allData) {
     });
 }
 
-
+async function socket() {
+    io.on('connection', (socket) => {
+        console.log('a user connected', socket.id);
+        io.emit('test event', 'Vijayakumar Here');
+    });
+}
 
 module.exports = {
     sentMsg: async (req, res) => {
@@ -81,13 +86,13 @@ module.exports = {
                 }
                 res?.status(200).json(chatHistory);
             };
-    
+
             onValue(chatRef, snapshotCallback, { onlyOnce: true });
         } catch (err) {
             console.error(err);
             res?.status(500).json({ error: 'Internal Server Error' });
         }
-    },    
+    },
     NetworkStatus: async (req, res) => {
         try {
             const { userId, status } = req.body;

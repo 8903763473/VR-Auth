@@ -38,7 +38,9 @@ module.exports = {
     Login: async (req, res, next) => {
         try {
             const body = req.body;
+            console.log(body);
             const results = await LoginService(body);
+            console.log(results);
             if (results?.length === 0) {
                 return res.status(404).json({ error: 'User Not Found ,Please Register' });
             }
